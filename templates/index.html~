@@ -1,0 +1,79 @@
+<!doctype>
+
+<html>
+
+<head>
+    <title>Firma kurierska "Paczuszka"</title>
+    <link rel="stylesheet" href="/static/styles/main.css">    
+</head>
+
+<header>
+
+    <a href="/"><img src="/static/images/logo.png" alt="logo"></a>
+    <nav>
+        <ul id="menu">
+           	<li id="strona_glowna"><a href="/">Strona główna</a></li>
+            <li id="zalgouj_sie"><a href="/sender/login">Zaloguj się</a></li>
+            <li id="rejestracja"><a href="/sender/register">Rejestracja</a> </li>
+        </ul>
+    </nav>
+</header>
+
+<body>
+
+    <h1>Witaj na naszej stronie internetowej</h1>
+    <h3>O nas</h3>
+    <section>
+        Jesteśmy jedną z największych firm kurierskich w Polsce. Dostarczamy przesyłki do punktów odbioru przesyłek, w
+        których nasi klienci mogą je odebrać <b>wygodnie i bezpiecznie</b>.
+        Przesyłkę otrzymasz w ciągu 2 dni od daty jej nadania.
+    </section>
+
+    <h3>Nasza oferta</h3>
+    <section>
+        <table>
+            <tr>
+                <th>Rozmiar przesyłki</th>
+                <th>Cena bruttno [zł]</th>
+                <th>Opis</th>
+            </tr>
+            <tr>
+                <td>S</td>
+                <td>8,99</td>
+                <td>Maksymalne wymiary: 10x40x60 cm, maksymalna waga: 5 kg</td>
+            </tr>
+            <tr>
+                <td>M</td>
+                <td>12,99</td>
+                <td>Maksymalne wymiary: 20x40x60 cm, maksymalna waga: 10 kg</td>
+            </tr>
+            <tr>
+                <td>L</td>
+                <td>16,99</td>
+                <td>Maksymalne wymiary: 50x80x80 cm, maksymalna waga: 15 kg</td>
+            </tr>
+            <tr>
+                <td>XL</td>
+                <td>18,99</td>
+                <td>Maksymalne wymiary: 100x100x80 cm, maksymalna waga: 20 kg</td>
+            </tr>
+        </table>
+
+    </section>
+
+    <h3>Jak odebrać paczkę?</h3>
+    <section>
+        Odbieranie paczek jest bardzo proste. Aby odebrać paczkę z punktu odbioru przesyłek wystarczy posiadać tylko
+        numer telefonu osoby zamawiającej i specjalny kod, który otrzymujesz w wiadomości SMS-owej i e-mailowej.
+    </section>
+
+    <footer>2020 | <a href="https://github.com/Piotr9923/Projekt_PAMiW">https://github.com/Piotr9923/Projekt_PAMiW</a> |
+        <a href='https://dryicons.com/'> Icon by Dryicons </a></footer>
+
+
+
+</body>
+
+
+
+</html>

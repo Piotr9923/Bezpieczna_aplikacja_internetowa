@@ -1,0 +1,64 @@
+<!doctype>
+
+<html>
+
+<head>
+    <title>Firma kurierska "Paczuszka"</title>
+    <link rel="stylesheet" href="/static/styles/main.css">    
+</head>
+
+<header>
+
+    <a href="/"><img src="/static/images/logo.png" alt="logo"></a>
+    <nav>
+        <ul id="menu">
+           	<li id="strona_glowna"><a href="/">Strona główna</a></li>
+            <li id="przesylki"><a href="/sender/dashboard">Moje etykiety</a></li>
+            <li id="dodaj"><a href="/label/add">Utwórz etykietę</a> </li>
+            <li id="wyloguj"><a href="/sender/logout">Wyloguj się</a> </li>
+        </ul>
+    </nav>
+</header>
+
+<body>
+
+	{% with messages = get_flashed_messages() %}
+		{% if messages %}
+			<ul class=flashes>
+ 			{% for message in messages %}
+ 				<li>{{ message }}</li>
+ 			{% endfor %}
+ 			</ul>
+ 		{% endif %}
+	{% endwith %}
+
+   
+   {% if haslabels %}
+   <h1>Twoje etykiety paczek:</h1>
+   <br/>
+		 <table>  	
+   	{% for label in labels.items() %}
+   	
+   	<tr class="label">
+			<th class="id"><b>Id etykiety: {{label}}</b></th>
+			<th class="more"><a href="/labels/{{label}}">Wyświetl szczegóły</a></th>
+			<th class="delete"><a href="/label/delete/{{label}}">Usuń</a></th>	
+		</tr>
+		<tr class="empty"></tr>
+   	{% endfor %}
+   	 </table>
+   {% else %}
+   	<h2 class="center_text">Nie masz etykiet skojarzonych z Twoim kontem</h2>
+  	{% endif %}
+   
+
+    <footer>2020 | <a href="https://github.com/Piotr9923/Projekt_PAMiW">https://github.com/Piotr9923/Projekt_PAMiW</a> |
+        <a href='https://dryicons.com/'> Icon by Dryicons </a></footer>
+
+
+
+</body>
+
+
+
+</html>

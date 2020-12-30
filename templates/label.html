@@ -1,0 +1,46 @@
+<!doctype>
+
+<html>
+
+<head>
+    <title>Firma kurierska "Paczuszka"</title>
+    <link rel="stylesheet" href="/static/styles/main.css">    
+</head>
+
+<header>
+
+    <a href="/"><img src="/static/images/logo.png" alt="logo"></a>
+    <nav>
+        <ul id="menu">
+           	<li id="strona_glowna"><a href="/">Strona główna</a></li>
+            <li id="przesylki"><a href="/sender/dashboard">Moje etykiety</a></li>
+            <li id="dodaj"><a href="/label/add">Utwórz etykietę</a> </li>
+            <li id="wyloguj"><a href="/sender/logout">Wyloguj się</a> </li>
+        </ul>
+    </nav>
+</header>
+
+<body>
+
+   
+   <h1 class="center_text">Szczegóły etykiety:</h1>
+   
+   <ul class="list_none">
+		<li><h2>ID etykiety: {{label_id}}<h2></li>
+		<li><h2>Nazwa adresata: {{name}}<h2></li>
+		<li><h2>ID skrytki: {{delivery}}<h2></li>
+		<li><h2>Rozmiar przesyłki: {{size}}<h2></li>  
+
+   </ul>
+   
+
+    <footer>2020 | <a href="https://github.com/Piotr9923/Projekt_PAMiW">https://github.com/Piotr9923/Projekt_PAMiW</a> |
+        <a href='https://dryicons.com/'> Icon by Dryicons </a></footer>
+
+
+
+</body>
+
+
+
+</html>

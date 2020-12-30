@@ -1,0 +1,8 @@
+Flask
+Flask-Session
+gunicorn
+python-dotenv
+redis
+bcrypt
+PyJWT
+mysql-connector-python

@@ -1,0 +1,67 @@
+<!doctype>
+
+<html>
+
+<head>
+    <title>Firma kurierska "Paczuszka"</title>
+    <link rel="stylesheet" href="/static/styles/registration.css">    
+</head>
+
+<header>
+    <a href="/"><img src="/static/images/logo.png" alt="logo"></a>
+    <nav>
+        <ul id="menu">
+           	<li id="strona_glowna"><a href="/">Strona główna</a></li>
+            <li id="przesylki"><a href="/sender/dashboard">Moje przesyłki</a></li>
+            <li id="dodaj"><a href="/package/add">Dodaj przesyłkę</a> </li>
+            <li id="wyloguj"><a href="/sender/logout">Wyloguj się</a> </li>
+        </ul>
+    </nav>
+</header>
+
+<body>
+
+	{% with messages = get_flashed_messages() %}
+		{% if messages %}
+			<ul class=flashes>
+ 			{% for message in messages %}
+ 				<li>{{ message }}</li>
+ 			{% endfor %}
+ 			</ul>
+ 		{% endif %}
+	{% endwith %}
+		
+    <form id="add_package" method="POST" action="/package/add"
+        enctype="multipart/form-data">
+        <ul>
+            <li>
+                <h1> Dodaj paczkę </h1>
+            </li>
+            <li><b>Nazwa adresata: </b></li><li><input type="text" class="input_field" id="name" name="name" /></input>
+				</li>
+            <li><b> Id skrytki:</b></li><li> <input type="text" class="input_field" id="delivary_id" name="delivary_id" /></input>
+            </li>
+            <li><b>Rozmiar paczki: </b></li>
+            <li><input type="radio" id="size" name="size" value="S">S
+            	<input type="radio" id="size" name="size" value="M">M
+            	<input type="radio" id="size" name="size" value="L">L
+            	<input type="radio" id="size" name="size" value="XL">XL
+            </li>
+           
+            <li><input type="submit" id="button" value="Dodaj" /></li>
+        </ul>
+    </form>
+   
+   
+   
+
+    <footer>2020 | <a href="https://github.com/Piotr9923/Projekt_PAMiW">https://github.com/Piotr9923/Projekt_PAMiW</a> |
+        <a href='https://dryicons.com/'> Icon by Dryicons </a></footer>
+
+
+
+</body>
+
+
+
+</html>
