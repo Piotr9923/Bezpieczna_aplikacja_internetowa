@@ -25,7 +25,7 @@
    
    <h1 class="center_text">Szczegóły etykiety:</h1>
    
-   <ul>
+   <ul class="list_none">
 		<li><h2>ID etykiety: {{label_id}}<h2></li>
 		<li><h2>Nazwa adresata: {{name}}<h2></li>
 		<li><h2>ID skrytki: {{delivery}}<h2></li>

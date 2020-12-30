@@ -37,12 +37,12 @@
    <h1>Twoje etykiety paczek:</h1>
    <br/>
 		 <table>  	
-   	{% for labels, delete_token in delete_tokens.items() %}
+   	{% for label in labels.items() %}
    	
    	<tr class="label">
-			<th class="id"><b>Id etykiety: {{labels}}</b></th>
-			<th class="more"><a href="/labels/{{labels}}">Wyświetl szczegóły</a></th>
-			<th class="delete"><a href="/label/delete/{{labels}}?token={{delete_token}}">Usuń</a></th>	
+			<th class="id"><b>Id etykiety: {{label}}</b></th>
+			<th class="more"><a href="/labels/{{label}}">Wyświetl szczegóły</a></th>
+			<th class="delete"><a href="/label/delete/{{label}}">Usuń</a></th>	
 		</tr>
 		<tr class="empty"></tr>
    	{% endfor %}

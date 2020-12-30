@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>Zaloguj się</title>
+    <title>Bezpiecznik</title>
     <link rel="stylesheet" href="/static/styles/input_form.css">
 </head>
 
@@ -11,11 +11,9 @@
     <a href="/"><img src="/static/images/logo.png" alt="logo" class="logo_image"></a>
     <nav>
         <ul id="menu">
-
-            <li id="strona_glowna"><a href="/">Strona główna</a></li>
-            <li id="zalgouj_sie"><a href="/sender/login">Zaloguj się</a></li>
-            <li id="rejestracja"><a href="/sender/register">Rejestracja</a> </li>
-
+           	<li id="strona_glowna"><a href="/">Strona główna</a></li>
+            <li id="logowanie"><a href="/user/login">Logowanie</a></li>
+            <li id="rejestracja"><a href="/user/register">Rejestracja</a> </li>
         </ul>
     </nav>
 </header>
@@ -33,23 +31,23 @@
  	{% endif %}
 {% endwith %}
 	
-    <form id="formularz" method="POST" action="/sender/login"
-        enctype="multipart/form-data">
+    <form id="formularz" method="POST" action="/user/login" enctype="multipart/form-data">
         <ul>
             <li>
                 <h1> Zaloguj się </h1>
             </li>
-            <li><b>Login: </b></li><li><input type="text" class="input_field" id="login" name="login" /></input>
+            <li><b>Login: </b></li><li><input type="text" class="input_field" id="login" name="login" />
 				</li>
-            <li><b> Hasło:</b></li><li> <input type="password" class="input_field" id="password" name="password" /></input>
+            <li><b>Hasło:</b></li><li> <input type="password" class="input_field" id="password" name="password" />
             </li>
            
-            <li><input type="submit" id="button" value="Zaloguj się" /></input></li>
+            <li><input type="submit" id="button" value="Zaloguj się" /></li>
         </ul>
     </form>
 
-    <footer>2020 | <a href="https://github.com/Piotr9923/Projekt_PAMiW">https://github.com/Piotr9923/Projekt_PAMiW</a> |
+    <footer>2021 | <a href="https://github.com/Piotr9923/Bezpieczna_aplikacja_internetowa">https://github.com/Piotr9923/Bezpieczna_aplikacja_internetowa</a> |
         <a href='https://dryicons.com/'> Icon by Dryicons </a></footer>
+
 
 </body>
 

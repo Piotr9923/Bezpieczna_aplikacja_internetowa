@@ -31,9 +31,14 @@ def delete_database():
 
 
 def create_database():
+    sql.execute("USE db;")
+    sql.execute("SELECT password FROM users WHERE username = 'test'")
+    password, = sql.fetchone() or (None,)
+
     sql.execute("CREATE DATABASE IF NOT EXISTS db;")
     sql.execute("USE db;")
-    sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128));")
+    sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128), master_password "
+                "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
 
 
 def get_password(username):
@@ -42,11 +47,57 @@ def get_password(username):
     return password
 
 
+def is_user(login):
+    sql.execute(f"SELECT 1 FROM users WHERE username = '{login}'")
+    login, = sql.fetchone() or (None,)
+    if login is None:
+        return False
+    return True
+
+
+def save_user(phone_number,login,email,password,master_password):
+
+    password = password.encode()
+    master_password = master_password.encode()
+
+    salt = gensalt(5)
+    hashed_password = hashpw(password, salt)
+    salt = gensalt(5)
+    hashed_password = hashpw(hashed_password, salt).decode()
+
+    salt = gensalt(5)
+    hashed_master_password = hashpw(master_password, salt)
+    salt = gensalt(5)
+    hashed_master_password = hashpw(hashed_master_password, salt).decode()
+
+    sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
+
+    db.commit()
+    return True
+
+
+def is_database_available():
+    try:
+        db.ping()
+    except ConnectionError as e:
+        print(str(e))
+        return False
+    return True
+
+
+def redirect(url, status=301):
+    response = make_response('', status)
+    response.headers['Location'] = url
+    return response
+
+
 create_database()
 
 
 @app.route('/')
 def index():
+
+    print(request.remote_addr, flush=True)
 
     if session.get('login') is None:
         return render_template("index.html")
@@ -65,42 +116,44 @@ def registration_form():
 
 @app.route('/user/register', methods=['POST'])
 def registration():
-    firstname = request.form.get("firstname")
-    lastname = request.form.get("lastname")
-    adress = request.form.get("adress")
     email = request.form.get("mail")
+    phone_number = request.form.get("phone_number")
     login = request.form.get("login")
     password = request.form.get("password")
     password2 = request.form.get("password2")
+    master_password = request.form.get("master_password")
+    master_password2 = request.form.get("master_password2")
 
     if not is_database_available():
         flash("Błąd połączenia z bazą danych")
         return redirect(url_for('registration_form'))
 
-    if not firstname:
-        flash("Brak imienia")
-    if not lastname:
-        flash("Brak nazwiska")
-    if not adress:
-        flash("Brak adresu")
     if not email:
         flash("Brak adresu e-mail")
+    if not phone_number:
+        flash("Brak numeru telefonu")
     if not login:
         flash("Brak nazwy użytkownika")
     if not password:
         flash("Brak hasła")
+    if not master_password:
+            flash("Brak hasła głównego")
     if password != password2:
         flash(f"Hasła nie są takie same {password} _ {password2}")
         return redirect(url_for('registration_form'))
 
-    if email and login and password and firstname and lastname and adress:
+    if master_password != master_password2:
+        flash(f"Hasła główne nie są takie same {password} _ {password2}")
+        return redirect(url_for('registration_form'))
+
+    if email and login and password and master_password and phone_number:
         if is_user(login):
             flash(f"Użytkownik {login} istnieje")
             return redirect(url_for('registration_form'))
     else:
         return redirect(url_for('registration_form'))
 
-    success = save_user(firstname,lastname,login,email,password,adress)
+    success = save_user(phone_number,login,email,password,master_password)
 
     if not success:
         flash("Błąd rejestracji")
@@ -167,7 +220,7 @@ def dashboard():
     return render_template("dashboard.html", labels=labels.items(), haslabels=(len(labels)>0), delete_tokens=delete_tokens)
 
 
-@app.route('/password/add',methods=['GET'])
+@app.route('/password/add', methods=['GET'])
 def add_label_form():
 
     if session.get('login') is None:

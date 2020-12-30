@@ -3,19 +3,17 @@
 <html>
 
 <head>
-    <title>Rejestracja</title>
-    <link rel="stylesheet" href="/static/styles/registration.css">
+    <title>Bezpiecznik</title>
+    <link rel="stylesheet" href="/static/styles/input_form.css">
 </head>
 
 <header>
     <a href="/"><img src="/static/images/logo.png" alt="logo" class="logo_image"></a>
     <nav>
         <ul id="menu">
-
-            <li id="strona_glowna"><a href="/">Strona główna</a></li>
-            <li id="zalgouj_sie"><a href="/sender/login">Zaloguj się</a></li>
-            <li id="rejestracja"><a href="/sender/register">Rejestracja</a> </li>
-
+           	<li id="strona_glowna"><a href="/">Strona główna</a></li>
+            <li id="logowanie"><a href="/user/login">Logowanie</a></li>
+            <li id="rejestracja"><a href="/user/register">Rejestracja</a> </li>
         </ul>
     </nav>
 </header>
@@ -32,35 +30,34 @@
 	{% endwith %}
 
 
-    <form id="formularz" method="POST" action="/sender/register"  enctype="multipart/form-data">
+    <form id="formularz" method="POST" action="/user/register" enctype="multipart/form-data">
         <ul>
             <li>
                 <h1> Załóż nowe konto </h1>
             </li>
-            <li><b>Imię:</b></li><li> <input type="text" class="input_field" id="firstname" name="firstname" /></input>
-
+            <li><b>Adres e-mail: </b></li><li><input type="text" class="input_field" id="mail" name="mail" />
             </li>
-            <li><b>Nazwisko:</b></li><li> <input type="text" class="input_field" id="lastname" name="lastname" /></input>
-                 
+            <li><b>Numer telefonu: </b></li><li><input type="text" class="input_field" id="phone_number" name="phone_number" />
             </li>
-            <li><b>Adres zamieszkania:</b></li><li> <input type="text" class="input_field" id="adress" name="adress" /></input>
+            <li><b>Login: </b></li><li><input type="text" class="input_field" id="login" name="login" />
             </li>
+            <li><b> Hasło:</b></li><li> <input type="password" class="input_field" id="password" name="password" />
             </li>
-            <li><b>Adres e-mail:</b></li><li> <input type="text" class="input_field" id="mail" name="mail" /></input>
+            <li> <b>Powtórz hasło:</b></li><li> <input type="password" class="input_field" id="password2" name="password2" />
             </li>
+            <li> <b>Hasło główne:</b></li><li> <input type="password" class="input_field" id="master_password" name="master_password" />
+            </li>    
+            <li> <b>Powtórz hasło główne:</b></li><li> <input type="password" class="input_field" id="master_password2" name="master_password2" />
+            </li> 
             
-            <li><b>Login: </b></li><li><input type="text" class="input_field" id="login" name="login" /></input>
-            </li>
-            <li><b> Hasło:</b></li><li> <input type="password" class="input_field" id="password" name="password" /></input>
-            </li>
-            <li> <b>Powtórz hasło:</b></li><li> <input type="password" class="input_field" id="password2" name="password2" /></input>
-            </li>
-            <li><input type="submit" id="button" value="Zarejestruj się" /></input></li>
+            <li><input type="submit" id="button" value="Zarejestruj się" /></li>
         </ul>
     </form>
 
-    <footer>2020 | <a href="https://github.com/Piotr9923/Projekt_PAMiW">https://github.com/Piotr9923/Projekt_PAMiW</a> |
+
+    <footer>2021 | <a href="https://github.com/Piotr9923/Bezpieczna_aplikacja_internetowa">https://github.com/Piotr9923/Bezpieczna_aplikacja_internetowa</a> |
         <a href='https://dryicons.com/'> Icon by Dryicons </a></footer>
+
 
 </body>
 
