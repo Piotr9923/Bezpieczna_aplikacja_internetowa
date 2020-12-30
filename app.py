@@ -55,20 +55,36 @@ def is_user(login):
     return True
 
 
+def verify_user(login,password):
+    if not is_user(login):
+        return False
+
+    hashed = get_password(login)
+    if hashed is None:
+        return False
+    hashed = hashed.encode()
+    password = password.encode()
+
+    print("HASŁA:", flush=True)
+    print(password,flush=True)
+    print(hashed, flush=True)
+
+    if checkpw(password,hashed):
+        return True
+
+    return False
+
+
 def save_user(phone_number,login,email,password,master_password):
 
     password = password.encode()
     master_password = master_password.encode()
 
-    salt = gensalt(5)
-    hashed_password = hashpw(password, salt)
-    salt = gensalt(5)
-    hashed_password = hashpw(hashed_password, salt).decode()
+    salt = gensalt(12)
+    hashed_password = hashpw(password, salt).decode()
 
-    salt = gensalt(5)
-    hashed_master_password = hashpw(master_password, salt)
-    salt = gensalt(5)
-    hashed_master_password = hashpw(hashed_master_password, salt).decode()
+    salt = gensalt(12)
+    hashed_master_password = hashpw(master_password, salt).decode()
 
     sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
 
@@ -139,11 +155,11 @@ def registration():
     if not master_password:
             flash("Brak hasła głównego")
     if password != password2:
-        flash(f"Hasła nie są takie same {password} _ {password2}")
+        flash(f"Hasła nie są takie same")
         return redirect(url_for('registration_form'))
 
     if master_password != master_password2:
-        flash(f"Hasła główne nie są takie same {password} _ {password2}")
+        flash(f"Hasła główne nie są takie same")
         return redirect(url_for('registration_form'))
 
     if email and login and password and master_password and phone_number:
@@ -200,24 +216,7 @@ def dashboard():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    labels = {}
-
-    for key in db.scan_iter("label:*"):
-
-        if db.hget(key, "sender")==session.get('login'):
-            labels[db.hget(key,"id").decode()]={
-                "id":db.hget(key,"id").decode(),
-                "name":db.hget(key,"name").decode(),
-                "delivery_id":db.hget(key,"delivery_id").decode(),
-                "size":db.hget(key,"size").decode()
-            }
-
-    delete_tokens = {}
-
-    for label in labels:
-        delete_tokens[label] = generate_delete_token(label, session.get('login')).decode()
-
-    return render_template("dashboard.html", labels=labels.items(), haslabels=(len(labels)>0), delete_tokens=delete_tokens)
+    return render_template("dashboard.html")
 
 
 @app.route('/password/add', methods=['GET'])
@@ -228,6 +227,14 @@ def add_label_form():
         return redirect(url_for('login_form'))
 
     return render_template("add_label.html")
+
+
+@app.route('/user/logout')
+def user_logout():
+
+    session.clear()
+
+    return render_template("logout.html")
 
 
 if __name__ == '__main__':
