@@ -145,7 +145,11 @@ footer{
 	font-size: 12px;
 	color:red;
 }
-
+	
 .unavailable_login_hidden_message{
 	visibility: hidden;
+}
+
+.password_strength{
+margin-bottom: 20px;
 }
