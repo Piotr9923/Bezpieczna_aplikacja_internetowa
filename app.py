@@ -11,6 +11,8 @@ from redis.exceptions import ConnectionError
 import jwt
 import os
 import mysql.connector as mariadb
+import time
+from datetime import datetime, timedelta
 
 
 db = mariadb.connect(host="mariadb", user="root", password="root")
@@ -65,10 +67,6 @@ def verify_user(login,password):
     hashed = hashed.encode()
     password = password.encode()
 
-    print("HASŁA:", flush=True)
-    print(password,flush=True)
-    print(hashed, flush=True)
-
     if checkpw(password,hashed):
         return True
 
@@ -113,19 +111,17 @@ create_database()
 @app.route('/')
 def index():
 
-    print(request.remote_addr, flush=True)
-
     if session.get('login') is None:
-        return render_template("index.html")
+        return render_template("index.html", ip=request.remote_addr)
 
-    return render_template('logged_index.html')
+    return render_template('logged_index.html', ip=request.remote_addr)
 
 
 @app.route('/user/register', methods=['GET'])
 def registration_form():
 
     if session.get('login') is None:
-        return render_template("registration.html")
+        return render_template("registration.html", ip=request.remote_addr)
 
     return redirect(url_for('index'))
 
@@ -182,13 +178,22 @@ def registration():
 def login_form():
 
     if session.get('login') is None:
-        return render_template("login.html")
+        return render_template("login.html", ip=request.remote_addr)
 
     return redirect(url_for('index'))
 
 
 @app.route('/user/login', methods=["POST"])
 def login():
+    if session.get("login_block_time") is not None:
+        if datetime.utcnow() > session.get("login_block_time"):
+            session.clear()
+
+    if session.get("bad_login") is not None and session.get("bad_login")>2:
+        delta = session.get("login_block_time")-datetime.utcnow()
+        flash("Logowanie możliwe za: "+str(delta.seconds//60)+" minut "+str(delta.seconds%60)+" sekund")
+        return redirect(url_for('login_form'))
+
     login = request.form.get("login")
     password = request.form.get("password")
 
@@ -200,6 +205,13 @@ def login():
         flash("Brak nazwy użytkownika lub hasła")
         return redirect(url_for('login_form'))
     if not verify_user(login,password):
+        print(session.get("bad_login"))
+        if session.get("bad_login") is None:
+            session["bad_login"]=0
+        session["bad_login"]=session.get("bad_login")+1
+        if session.get("bad_login")==3:
+            session["login_block_time"] = datetime.utcnow() + timedelta(seconds=300)
+        time.sleep(3)
         flash("Błędna nazwa użytkownika i/lub hasła")
         return redirect(url_for('login_form'))
 
@@ -216,7 +228,7 @@ def dashboard():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", ip=request.remote_addr)
 
 
 @app.route('/password/add', methods=['GET'])
@@ -226,7 +238,7 @@ def add_label_form():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("add_label.html")
+    return render_template("add_label.html", ip=request.remote_addr)
 
 
 @app.route('/user/logout')
@@ -234,7 +246,7 @@ def user_logout():
 
     session.clear()
 
-    return render_template("logout.html")
+    return render_template("logout.html", ip=request.remote_addr)
 
 
 if __name__ == '__main__':
