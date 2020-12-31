@@ -228,6 +228,9 @@ def dashboard():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
+    if session.get('login') == "admin" or session.get('login') == "Piotr9923":
+        flash("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł.")
+
     return render_template("dashboard.html", ip=request.remote_addr)
 
 
@@ -238,7 +241,7 @@ def add_label_form():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("add_label.html", ip=request.remote_addr)
+    return render_template("add_password.html", ip=request.remote_addr)
 
 
 @app.route('/user/logout')

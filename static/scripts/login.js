@@ -11,7 +11,7 @@ function input_fields_events(){
 
     login.addEventListener("keyup", function (ev) {
 
-        if(correct_values(this.value,/[A-Za-z_.-]+$/)){
+        if(correct_values(this.value,/[A-Za-z0-9_.-]+$/)){
             login_correct = true;
             this.classList.remove("incorrect_field");
         }
@@ -26,7 +26,7 @@ function input_fields_events(){
 
     password.addEventListener("keyup", function (ev) {
 
-        if(correct_values(this.value,/[A-Za-z_.@!$*-]+$/)){
+        if(correct_values(this.value,/[A-Za-z0-9_.@!$*-]+$/)){
             password_correct = true;
             this.classList.remove("incorrect_field");
         }

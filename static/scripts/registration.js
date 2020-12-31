@@ -113,6 +113,9 @@ function input_fields_events(){
         update_submit_button()
 
         password_strength.innerText = "Siła hasła: "+ get_password_strength(this.value)
+        if(this.value.length==0){
+            password_strength.innerText = ""
+        }
 
     });
 
@@ -147,6 +150,16 @@ function input_fields_events(){
 
         master_password_strength.innerText = "Siła hasła: "+ get_password_strength(this.value)
 
+        if(this.value.length==0){
+            master_password_strength.innerText = ""
+        }
+
+        if(this.value.length>0 && this.value==password.value){
+            document.getElementById("password_warning").innerText="Wpisałeś takie same hasło główne jak hasło. Jest to niebezpieczne!"
+        }
+        else{
+            document.getElementById("password_warning").innerText=""
+        }
 
     });
 
