@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, session
+from flask import Flask, request, make_response, session, g
 from dotenv import load_dotenv
 from flask import render_template, flash, url_for
 from os import getenv
@@ -29,6 +29,8 @@ app.debug = False
 
 def delete_database():
     sql.execute("DROP TABLE users")
+    sql.execute("DROP TABLE connections")
+    sql.execute("DROP TABLE last_logins")
     sql.execute("DROP DATABASE db")
 
 
@@ -39,6 +41,7 @@ def create_database():
     sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128), master_password "
                 "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
     sql.execute("CREATE TABLE IF NOT EXISTS connections (username VARCHAR(32), ip VARCHAR(128));")
+    sql.execute("CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL);")
 
 
 def get_password(username):
@@ -83,7 +86,7 @@ def save_user(phone_number,login,email,password,master_password):
     hashed_master_password = hashpw(master_password, salt).decode()
 
     sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
-
+    sql.execute(f"Insert into last_logins(username) VALUES ('{login}');")
     db.commit()
     return True
 
@@ -112,6 +115,19 @@ def save_new_ip(ip):
     return True
 
 
+def set_last_login():
+    sql.execute(f"SELECT logged_time, ip FROM last_logins where username = '{session['login']}'")
+    last_login = sql.fetchall()
+
+    if last_login[0][0] is None:
+        session["last_login"] = "To jest Twoje pierwsze logowanie"
+    else:
+        session["last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]}"
+    actual_time = datetime.utcnow() + timedelta(minutes=60);
+    sql.execute(f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}';")
+    db.commit()
+
+
 def is_database_available():
     try:
         db.ping()
@@ -136,7 +152,7 @@ def index():
     if session.get('login') is None:
         return render_template("index.html")
 
-    return render_template('logged_index.html')
+    return render_template('logged_index.html',last_login_info=session["last_login"], ip=request.remote_addr)
 
 
 @app.route('/user/register', methods=['GET'])
@@ -227,7 +243,6 @@ def login():
         flash("Brak nazwy użytkownika lub hasła")
         return redirect(url_for('login_form'))
     if not verify_user(login,password):
-        print(session.get("bad_login"))
         if session.get("bad_login") is None:
             session["bad_login"]=0
         session["bad_login"]=session.get("bad_login")+1
@@ -239,6 +254,8 @@ def login():
 
     session["login"] = login
     session["logged-at"] = datetime.now()
+
+    set_last_login()
 
     if is_new_ip(request.remote_addr):
         print(f"Wysłałbym do Użytkownika maila o logowaniu na jego konto z nowego adresu IP - {request.remote_addr}", flush=True)
@@ -255,9 +272,9 @@ def dashboard():
         return redirect(url_for('login_form'))
 
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
-        flash("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł.")
+        print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł", flush=True)
 
-    return render_template("dashboard.html")
+    return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr)
 
 
 @app.route('/password/add', methods=['GET'])
@@ -267,7 +284,7 @@ def add_label_form():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("add_password.html")
+    return render_template("add_password.html",last_login_info=session["last_login"], ip=request.remote_addr)
 
 
 @app.route('/user/logout')
