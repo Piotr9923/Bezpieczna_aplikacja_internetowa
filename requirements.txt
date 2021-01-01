@@ -6,3 +6,6 @@ redis
 bcrypt
 PyJWT
 mysql-connector-python
+pyyaml
+ua-parser
+user-agents

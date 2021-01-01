@@ -13,6 +13,7 @@ import os
 import mysql.connector as mariadb
 import time
 from datetime import datetime, timedelta
+from user_agents import parse
 
 
 db = mariadb.connect(host="mariadb", user="root", password="root")
@@ -41,11 +42,17 @@ def create_database():
     sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128), master_password "
                 "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
     sql.execute("CREATE TABLE IF NOT EXISTS connections (username VARCHAR(32), ip VARCHAR(128));")
-    sql.execute("CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL);")
+    sql.execute("CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL, browser VARCHAR(32) NULL, op_sys VARCHAR(32));")
 
 
 def get_password(username):
     sql.execute(f"SELECT password FROM users WHERE username = '{username}'")
+    password, = sql.fetchone() or (None,)
+    return password
+
+
+def get_mail(username):
+    sql.execute(f"SELECT mail FROM users WHERE username = '{username}'")
     password, = sql.fetchone() or (None,)
     return password
 
@@ -119,15 +126,17 @@ def save_new_ip(ip):
 
 
 def set_last_login():
-    sql.execute(f"SELECT logged_time, ip FROM last_logins where username = '{session['login']}'")
+    sql.execute(f"SELECT logged_time, ip, browser, op_sys FROM last_logins where username = '{session['login']}'")
     last_login = sql.fetchall()
+
+    ua = parse(request.headers.get('User-Agent'))
 
     if last_login[0][0] is None:
         session["last_login"] = "To jest Twoje pierwsze logowanie"
     else:
-        session["last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]}"
+        session["last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]} z przeglądarki {last_login[0][2]} w systemie operacyjnym {last_login[0][3]}"
     actual_time = datetime.utcnow() + timedelta(minutes=60);
-    sql.execute(f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}';")
+    sql.execute(f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}', browser='{ua.browser.family}', op_sys='{ua.os.family}';")
     db.commit()
 
 
@@ -278,6 +287,33 @@ def dashboard():
         print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł", flush=True)
 
     return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr)
+
+
+@app.route('/user/password_change', methods=["GET"])
+def change_password_form():
+
+    return render_template("change_password.html")
+
+
+@app.route('/user/password_change', methods=["POST"])
+def change_password():
+
+    login = request.form.get("login")
+    mail = request.form.get("mail")
+
+    if is_user(login):
+        if get_mail(login) is not None and get_mail(login) == mail:
+            print("Wysłałbym maila do Użytkownika o treści:\n"
+                  "Aby zmienić hasło kliknij w poniższy link:\n"
+                  "LINK", flush=True)
+            flash("Mail i SMS zostały wysłane",category="info")
+            return redirect(url_for('index'))
+        else:
+            flash("Login i/lub mail są niepoprawne")
+            return render_template("change_password.html")
+    else:
+        flash("Login i/lub mail są niepoprawne")
+        return render_template("change_password.html")
 
 
 @app.route('/password/add', methods=['GET'])

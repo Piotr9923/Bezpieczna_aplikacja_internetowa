@@ -7,6 +7,8 @@ let password_correct = true
 let password2_correct = true
 let master_password_correct = true
 let master_password2_correct = true
+let password_strength_correct = true
+let master_password_strength_correct = true
 
 let mail = document.getElementById("mail")
 let phone = document.getElementById("phone_number")
@@ -112,10 +114,20 @@ function input_fields_events(){
 
         update_submit_button()
 
-        password_strength.innerText = "Siła hasła: "+ get_password_strength(this.value)
+        p_strength = get_password_strength(this.value)
+        if(this.value.length>0 && p_strength == "Bardzo słabe" || p_strength == "Słabe"){
+            password_strength_correct = false
+        }else{
+            password_strength_correct = true
+        }
+        password_strength.innerText = "Siła hasła: "+ p_strength
+
+
         if(this.value.length==0){
             password_strength.innerText = ""
         }
+
+        update_submit_button()
 
     });
 
@@ -146,10 +158,15 @@ function input_fields_events(){
 
         }
 
-        update_submit_button()
+        p_strength = get_password_strength(this.value)
+        if(this.value.length>0 && p_strength == "Bardzo słabe" || p_strength == "Słabe"){
+            master_password_strength = false
+        }else{
+            master_password_strength = true
+        }
+        master_password_strength.innerText = "Siła hasła: "+ p_strength
 
-        master_password_strength.innerText = "Siła hasła: "+ get_password_strength(this.value)
-
+        
         if(this.value.length==0){
             master_password_strength.innerText = ""
         }
@@ -192,6 +209,14 @@ function update_submit_button(){
         document.getElementById("button").disabled = true;
         document.getElementById("button").classList.add("disabled_button");
         document.getElementById("info").innerText = "Formularz zawiera niedozwolone symbole!"
+    }
+
+    if(password_strength_correct && master_password_strength_correct){
+        document.getElementById("password_strength_warning").innerText = ""
+    }else{
+        document.getElementById("button").disabled = true;
+        document.getElementById("button").classList.add("disabled_button");
+        document.getElementById("password_strength_warning").innerText = "Hasła powinny mieć co najmniej 'średnią' siłę"
     }
 
 }
