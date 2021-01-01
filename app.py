@@ -84,10 +84,13 @@ def save_user(phone_number,login,email,password,master_password):
 
     salt = gensalt(12)
     hashed_master_password = hashpw(master_password, salt).decode()
+    try:
+        sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
+        sql.execute(f"Insert into last_logins(username) VALUES ('{login}');")
+        db.commit()
+    except Exception as e:
+        return False
 
-    sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
-    sql.execute(f"Insert into last_logins(username) VALUES ('{login}');")
-    db.commit()
     return True
 
 
@@ -206,7 +209,7 @@ def registration():
     success = save_user(phone_number,login,email,password,master_password)
 
     if not success:
-        flash("Błąd rejestracji")
+        flash("Błąd rejestracji! Sprawdź długość wprowadzonych danych")
         return redirect(url_for('registration_form'))
 
     return redirect(url_for('login_form'))
