@@ -14,7 +14,7 @@ import mysql.connector as mariadb
 import time
 from datetime import datetime, timedelta
 from user_agents import parse
-
+from random import randint
 
 db = mariadb.connect(host="mariadb", user="root", password="root")
 sql = db.cursor()
@@ -34,6 +34,7 @@ def delete_database():
     sql.execute("DROP TABLE users")
     sql.execute("DROP TABLE connections")
     sql.execute("DROP TABLE last_logins")
+    sql.execute("DROP TABLE sms_codes")
     sql.execute("DROP DATABASE db")
 
 
@@ -44,6 +45,7 @@ def create_database():
     sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128), master_password "
                 "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
     sql.execute("CREATE TABLE IF NOT EXISTS connections (username VARCHAR(32), ip VARCHAR(128));")
+    sql.execute("CREATE TABLE IF NOT EXISTS sms_codes (username VARCHAR(32), code VARCHAR(128) NULL);")
     sql.execute("CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL, browser VARCHAR(32) NULL, op_sys VARCHAR(32));")
 
 
@@ -55,6 +57,12 @@ def get_password(username):
 
 def get_mail(username):
     sql.execute(f"SELECT mail FROM users WHERE username = '{username}'")
+    password, = sql.fetchone() or (None,)
+    return password
+
+
+def get_sms_code(username):
+    sql.execute(f"SELECT code FROM sms_codes WHERE username = '{username}'")
     password, = sql.fetchone() or (None,)
     return password
 
@@ -96,6 +104,7 @@ def save_user(phone_number,login,email,password,master_password):
     try:
         sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
         sql.execute(f"Insert into last_logins(username) VALUES ('{login}');")
+        sql.execute(f"Insert into sms_codes(username) VALUES ('{login}');")
         db.commit()
     except Exception as e:
         return False
@@ -138,7 +147,7 @@ def set_last_login():
     else:
         session["last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]} z przeglądarki {last_login[0][2]} w systemie operacyjnym {last_login[0][3]}"
     actual_time = datetime.utcnow() + timedelta(minutes=60);
-    sql.execute(f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}', browser='{ua.browser.family}', op_sys='{ua.os.family}';")
+    sql.execute(f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}', browser='{ua.browser.family}', op_sys='{ua.os.family}' WHERE username='{session['login']}';")
     db.commit()
 
 
@@ -180,6 +189,27 @@ def generate_token(login):
     }
     token = encode(payload, JWT_SECRET, algorithm='HS256')
     return token
+
+
+def generate_sms_code(login):
+
+    code = generate_code()
+
+    code = code.encode()
+
+    salt = gensalt(12)
+    hashed_code = hashpw(code, salt).decode()
+
+    sql.execute(f"UPDATE sms_codes SET code='{hashed_code}' WHERE username = '{login}';")
+    db.commit()
+
+    return code
+
+
+def generate_code():
+    code = str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9))
+
+    return code
 
 
 create_database()
@@ -330,10 +360,14 @@ def change_password():
     if is_user(login):
         if get_mail(login) is not None and get_mail(login) == mail:
 
+            code = generate_sms_code(login).decode()
             token = generate_token(login)
             print("Wysłałbym maila do Użytkownika o treści:\n"
                   "Aby zmienić hasło, w ciągu 15 minut, kliknij w poniższy link:\n"
-                  f"{get_link(token)}", flush=True)
+                  f"{get_link(token)}\n\n"
+                  "Wysłałbym do Użytkownika SMS-a z kodem:\n"
+                  f"{code}", flush=True)
+
             flash("Mail i SMS zostały wysłane", category="info")
             return redirect(url_for('index'))
         else:
@@ -351,6 +385,14 @@ def new_password_form():
     if token is None:
         flash("Nie masz dostępu zmiany hasła")
         return redirect(url_for('index'))
+    try:
+        payload = decode(token, JWT_SECRET, algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        flash("Czas na zmianę hasła minął. Spróbuj ponownie.")
+        return redirect(url_for('index'))
+    except jwt.InvalidTokenError:
+        flash("Brak dostępu do zmiany hasła")
+        return redirect(url_for('index'))
 
     return render_template("new_password.html", token=token)
 
@@ -360,28 +402,33 @@ def new_password():
 
     password = request.form.get("password")
     password2 = request.form.get("password2")
+    code = request.form.get("code")
     token = request.args.get('token')
 
     if not is_database_available():
         flash("Błąd połączenia z bazą danych")
         return render_template("new_password.html")
 
-    if not password or not password2:
-        flash("Brak hasła lub powtórzonego hasła")
+    if not password or not password2 or not code:
+        flash("Brak hasła, powtórzonego hasła lub kodu")
         return render_template("new_password.html", token=token)
 
     if password != password2:
-        flash("Hasła nie są takie samae")
-        return render_template("new_password.html",token=token)
-    print("token="+token,flush=True)
+        flash("Hasła nie są takie same")
+        return render_template("new_password.html", token=token)
+
     try:
         payload = decode(token, JWT_SECRET, algorithms=['HS256'])
     except jwt.ExpiredSignatureError:
         flash("Czas na zmianę hasła minął. Spróbuj ponownie.")
         return redirect(url_for('index'))
-    except jwt.InvalidTokenError as e:
+    except jwt.InvalidTokenError:
         flash("Brak dostępu do zmiany hasła")
         return redirect(url_for('index'))
+
+    if get_sms_code(payload.get('usr')) is not None and not checkpw(code.encode(),get_sms_code(payload.get('usr')).encode()):
+        flash("Błędny kod SMS")
+        return render_template("new_password.html", token=token)
 
     set_new_password(payload.get('usr'), password)
 

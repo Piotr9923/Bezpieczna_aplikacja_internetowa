@@ -3,9 +3,11 @@ let popular_passwords = ['123456','password','12345678','qwerty','123456789','12
 let password_correct = true
 let password2_correct = true
 let password_strength_correct = true
+let code_correct = true
 
 let password = document.getElementById("password")
 let password2 = document.getElementById("password2")
+let code = document.getElementById("code")
 
 let password_strength = document.getElementById("password_strength")
 let password2_strength = document.getElementById("master_password_strength")
@@ -54,6 +56,21 @@ function input_fields_events(){
         }
         else{
             password2_correct = false;
+            this.classList.add("incorrect_field");
+        }
+
+        update_submit_button()
+
+    });
+
+    code.addEventListener("keyup", function (ev) {
+
+        if(correct_values(this.value,/[0-9]+$/)){
+            code_correct = true;
+            this.classList.remove("incorrect_field");
+        }
+        else{
+            code_correct = false;
             this.classList.add("incorrect_field");
         }
 
