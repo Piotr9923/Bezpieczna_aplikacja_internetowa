@@ -27,6 +27,8 @@ app.secret_key = getenv("SECRET_KEY")
 
 app.debug = False
 
+JWT_SECRET = getenv("JWT_SECRET")
+
 
 def delete_database():
     sql.execute("DROP TABLE users")
@@ -153,6 +155,31 @@ def redirect(url, status=301):
     response = make_response('', status)
     response.headers['Location'] = url
     return response
+
+
+def get_link(token):
+    link = "http://0.0.0.0:8000/user/password/new?token="+token
+    return link
+
+
+def set_new_password(login, password):
+
+    password = password.encode()
+
+    salt = gensalt(12)
+    hashed_password = hashpw(password, salt).decode()
+    sql.execute(f"UPDATE users SET password = '{hashed_password}' WHERE username = '{login}';")
+    db.commit()
+
+
+def generate_token(login):
+    payload = {
+        "iss": "Bezpiecznik",
+        "exp": datetime.utcnow() + timedelta(minutes=15),
+        "usr": login,
+    }
+    token = encode(payload, JWT_SECRET, algorithm='HS256')
+    return token
 
 
 create_database()
@@ -284,18 +311,17 @@ def dashboard():
         return redirect(url_for('login_form'))
 
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
-        print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł", flush=True)
+        print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł",flush=True)
 
     return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr)
 
 
-@app.route('/user/password_change', methods=["GET"])
+@app.route('/user/password/change', methods=["GET"])
 def change_password_form():
-
     return render_template("change_password.html")
 
 
-@app.route('/user/password_change', methods=["POST"])
+@app.route('/user/password/change', methods=["POST"])
 def change_password():
 
     login = request.form.get("login")
@@ -303,10 +329,12 @@ def change_password():
 
     if is_user(login):
         if get_mail(login) is not None and get_mail(login) == mail:
+
+            token = generate_token(login)
             print("Wysłałbym maila do Użytkownika o treści:\n"
-                  "Aby zmienić hasło kliknij w poniższy link:\n"
-                  "LINK", flush=True)
-            flash("Mail i SMS zostały wysłane",category="info")
+                  "Aby zmienić hasło, w ciągu 15 minut, kliknij w poniższy link:\n"
+                  f"{get_link(token)}", flush=True)
+            flash("Mail i SMS zostały wysłane", category="info")
             return redirect(url_for('index'))
         else:
             flash("Login i/lub mail są niepoprawne")
@@ -314,6 +342,51 @@ def change_password():
     else:
         flash("Login i/lub mail są niepoprawne")
         return render_template("change_password.html")
+
+
+@app.route('/user/password/new', methods=["GET"])
+def new_password_form():
+    token = request.args.get('token')
+
+    if token is None:
+        flash("Nie masz dostępu zmiany hasła")
+        return redirect(url_for('index'))
+
+    return render_template("new_password.html", token=token)
+
+
+@app.route('/user/password/new', methods=["POST"])
+def new_password():
+
+    password = request.form.get("password")
+    password2 = request.form.get("password2")
+    token = request.args.get('token')
+
+    if not is_database_available():
+        flash("Błąd połączenia z bazą danych")
+        return render_template("new_password.html")
+
+    if not password or not password2:
+        flash("Brak hasła lub powtórzonego hasła")
+        return render_template("new_password.html", token=token)
+
+    if password != password2:
+        flash("Hasła nie są takie samae")
+        return render_template("new_password.html",token=token)
+    print("token="+token,flush=True)
+    try:
+        payload = decode(token, JWT_SECRET, algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        flash("Czas na zmianę hasła minął. Spróbuj ponownie.")
+        return redirect(url_for('index'))
+    except jwt.InvalidTokenError as e:
+        flash("Brak dostępu do zmiany hasła")
+        return redirect(url_for('index'))
+
+    set_new_password(payload.get('usr'), password)
+
+    flash("Hasło zostało zmienione")
+    return redirect(url_for('login_form'))
 
 
 @app.route('/password/add', methods=['GET'])
