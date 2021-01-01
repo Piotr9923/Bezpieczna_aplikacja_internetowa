@@ -33,14 +33,12 @@ def delete_database():
 
 
 def create_database():
-    sql.execute("USE db;")
-    sql.execute("SELECT password FROM users WHERE username = 'test'")
-    password, = sql.fetchone() or (None,)
 
     sql.execute("CREATE DATABASE IF NOT EXISTS db;")
     sql.execute("USE db;")
     sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128), master_password "
                 "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
+    sql.execute("CREATE TABLE IF NOT EXISTS connections (username VARCHAR(32), ip VARCHAR(128));")
 
 
 def get_password(username):
@@ -90,6 +88,30 @@ def save_user(phone_number,login,email,password,master_password):
     return True
 
 
+def is_new_ip(ip):
+
+    sql.execute(f"SELECT * FROM connections WHERE username='{session.get('login')}'")
+    connections = sql.fetchall()
+
+    for conn in connections:
+        if checkpw(ip.encode(),conn[1].encode()):
+            return False
+
+    return True
+
+
+def save_new_ip(ip):
+
+    ip = ip.encode()
+    salt = gensalt(8)
+    hashed_ip = hashpw(ip, salt).decode()
+
+    sql.execute(f"Insert into connections (username, ip) VALUES ('{session.get('login')}','{hashed_ip}');")
+
+    db.commit()
+    return True
+
+
 def is_database_available():
     try:
         db.ping()
@@ -112,16 +134,16 @@ create_database()
 def index():
 
     if session.get('login') is None:
-        return render_template("index.html", ip=request.remote_addr)
+        return render_template("index.html")
 
-    return render_template('logged_index.html', ip=request.remote_addr)
+    return render_template('logged_index.html')
 
 
 @app.route('/user/register', methods=['GET'])
 def registration_form():
 
     if session.get('login') is None:
-        return render_template("registration.html", ip=request.remote_addr)
+        return render_template("registration.html")
 
     return redirect(url_for('index'))
 
@@ -178,7 +200,7 @@ def registration():
 def login_form():
 
     if session.get('login') is None:
-        return render_template("login.html", ip=request.remote_addr)
+        return render_template("login.html")
 
     return redirect(url_for('index'))
 
@@ -218,6 +240,10 @@ def login():
     session["login"] = login
     session["logged-at"] = datetime.now()
 
+    if is_new_ip(request.remote_addr):
+        print(f"Wysłałbym do Użytkownika maila o logowaniu na jego konto z nowego adresu IP - {request.remote_addr}", flush=True)
+        save_new_ip(request.remote_addr)
+
     return redirect(url_for('dashboard'))
 
 
@@ -231,7 +257,7 @@ def dashboard():
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
         flash("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł.")
 
-    return render_template("dashboard.html", ip=request.remote_addr)
+    return render_template("dashboard.html")
 
 
 @app.route('/password/add', methods=['GET'])
@@ -241,7 +267,7 @@ def add_label_form():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("add_password.html", ip=request.remote_addr)
+    return render_template("add_password.html")
 
 
 @app.route('/user/logout')
@@ -249,7 +275,7 @@ def user_logout():
 
     session.clear()
 
-    return render_template("logout.html", ip=request.remote_addr)
+    return render_template("logout.html")
 
 
 if __name__ == '__main__':

@@ -153,3 +153,7 @@ footer{
 .password_strength{
 margin-bottom: 20px;
 }
+
+.help{
+cursor: pointer;
+}
