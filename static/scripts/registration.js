@@ -178,6 +178,8 @@ function input_fields_events(){
             document.getElementById("password_warning").innerText=""
         }
 
+        update_submit_button()
+
     });
 
     master_password2.addEventListener("keyup", function (ev) {
