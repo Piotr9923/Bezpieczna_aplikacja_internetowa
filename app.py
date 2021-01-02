@@ -15,6 +15,10 @@ import time
 from datetime import datetime, timedelta
 from user_agents import parse
 from random import randint
+from Crypto.Cipher import AES
+import hashlib
+from base64 import b64encode, b64decode
+
 
 db = mariadb.connect(host="mariadb", user="root", password="root")
 sql = db.cursor()
@@ -28,6 +32,8 @@ app.secret_key = getenv("SECRET_KEY")
 app.debug = False
 
 JWT_SECRET = getenv("JWT_SECRET")
+IV = getenv("IV")
+PASSWORD = getenv("PASSWORD")
 
 
 def delete_database():
@@ -46,7 +52,9 @@ def create_database():
                 "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
     sql.execute("CREATE TABLE IF NOT EXISTS connections (username VARCHAR(32), ip VARCHAR(128));")
     sql.execute("CREATE TABLE IF NOT EXISTS sms_codes (username VARCHAR(32), code VARCHAR(128) NULL);")
+    sql.execute("CREATE TABLE IF NOT EXISTS passwords (id INT AUTO_INCREMENT PRIMARY KEY NOT NULL, username VARCHAR(32), website VARCHAR(64), password VARCHAR(128));")
     sql.execute("CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL, browser VARCHAR(32) NULL, op_sys VARCHAR(32));")
+    sql.execute("set names 'utf8'");
 
 
 def get_password(username):
@@ -124,6 +132,14 @@ def is_new_ip(ip):
     return True
 
 
+def get_passwords():
+
+    sql.execute(f"SELECT id, website, password FROM passwords WHERE username='{session.get('login')}'")
+    passwords = sql.fetchall()
+
+    return passwords
+
+
 def save_new_ip(ip):
 
     ip = ip.encode()
@@ -135,6 +151,40 @@ def save_new_ip(ip):
     db.commit()
     return True
 
+
+def save_password(website, password):
+
+    password = encrypt(password)
+    try:
+        sql.execute(f"Insert into passwords (username, website, password) VALUES ('{session.get('login')}','{website}','{password}');")
+        db.commit()
+        return True
+    except Exception as e:
+        return False
+
+
+def encrypt(password):
+    key = hashlib.sha256(PASSWORD.encode()).digest()
+    mode = AES.MODE_CBC
+    cipher = AES.new(key, mode, IV.encode())
+    padded = pad_password(password).encode()
+    encrypted = cipher.encrypt(padded)
+    return b64encode(encrypted).decode()
+
+
+def decrypt(password):
+    password = b64decode(password.encode())
+    key = hashlib.sha256(PASSWORD.encode()).digest()
+    mode = AES.MODE_CBC
+    cipher = AES.new(key, mode, IV.encode())
+    decrypted_text = cipher.decrypt(password)
+    return decrypted_text.rstrip().decode()
+
+
+def pad_password(password):
+    while len(password)%16 != 0:
+        password = password + " "
+    return password
 
 def set_last_login():
     sql.execute(f"SELECT logged_time, ip, browser, op_sys FROM last_logins where username = '{session['login']}'")
@@ -343,7 +393,9 @@ def dashboard():
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
         print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł",flush=True)
 
-    return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr)
+    print(get_passwords(),flush=True)
+
+    return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr,haspasswords=(len(get_passwords())>0), passwords=get_passwords())
 
 
 @app.route('/user/password/change', methods=["GET"])
@@ -437,13 +489,40 @@ def new_password():
 
 
 @app.route('/password/add', methods=['GET'])
-def add_label_form():
+def add_password_form():
 
     if session.get('login') is None:
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
     return render_template("add_password.html",last_login_info=session["last_login"], ip=request.remote_addr)
+
+
+@app.route('/password/add', methods=['POST'])
+def add_password():
+
+    if session.get('login') is None:
+        flash("Najpierw musisz się zalogować")
+        return redirect(url_for('login_form'))
+
+    website = request.form.get("website")
+    password = request.form.get("password")
+
+    if not is_database_available():
+        flash("Błąd połączenia z bazą danych")
+        return redirect(url_for('add_password_form'))
+
+    if not website or not password:
+        flash("Brak nazwy serwisu lub hasła")
+        return redirect(url_for('add_password_form'))
+
+    success = save_password(website,password)
+
+    if not success:
+        flash("Błąd zapisu hasła")
+        return redirect(url_for('add_password_form'))
+
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/user/logout')

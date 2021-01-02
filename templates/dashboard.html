@@ -39,12 +39,12 @@
    <h1>Twoje zapisane hasła:</h1>
    <br/>
 		 <table>  	
-   	{% for password in passwords.items() %}
+   	{% for password in passwords %}
    	
    	<tr class="label">
-			<th><b>Serwis</b></th>
-			<th><b>hasło</b></th>
-			<th><a href="/passwords/{{id}}">Wyświetl hasło</a></th>
+			<th><b>{{password[1]}}</b></th>
+			<th><b>{{password[2]}}</b></th>
+			<th><button value={{password[0]}}>Odszyfruj hasło</button></th>
 		</tr>
 		<tr class="empty"></tr>
    	{% endfor %}

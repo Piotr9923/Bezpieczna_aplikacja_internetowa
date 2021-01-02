@@ -9,3 +9,5 @@ mysql-connector-python
 pyyaml
 ua-parser
 user-agents
+datetime
+pycryptodome
