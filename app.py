@@ -63,6 +63,12 @@ def get_password(username):
     return password
 
 
+def get_master_password(username):
+    sql.execute(f"SELECT master_password FROM users WHERE username = '{username}'")
+    password, = sql.fetchone() or (None,)
+    return password
+
+
 def get_mail(username):
     sql.execute(f"SELECT mail FROM users WHERE username = '{username}'")
     password, = sql.fetchone() or (None,)
@@ -94,6 +100,21 @@ def verify_user(login,password):
     password = password.encode()
 
     if checkpw(password,hashed):
+        return True
+
+    return False
+
+
+def verify_master_password(login,password):
+    if not is_user(login):
+        return False
+    hashed = get_master_password(login)
+    if hashed is None:
+        return False
+    hashed = hashed.encode()
+    password = password.encode()
+
+    if checkpw(password, hashed):
         return True
 
     return False
@@ -138,6 +159,15 @@ def get_passwords():
     passwords = sql.fetchall()
 
     return passwords
+
+
+def get_password_record(pid):
+
+    sql.execute(f"SELECT username, website, password FROM passwords WHERE id='{pid}'")
+    passwords = sql.fetchall()
+
+    return passwords
+
 
 
 def save_new_ip(ip):
@@ -205,7 +235,6 @@ def is_database_available():
     try:
         db.ping()
     except ConnectionError as e:
-        print(str(e))
         return False
     return True
 
@@ -393,8 +422,6 @@ def dashboard():
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
         print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł",flush=True)
 
-    print(get_passwords(),flush=True)
-
     return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr,haspasswords=(len(get_passwords())>0), passwords=get_passwords())
 
 
@@ -523,6 +550,32 @@ def add_password():
         return redirect(url_for('add_password_form'))
 
     return redirect(url_for('dashboard'))
+
+
+@app.route('/passwords/<pid>')
+def get_decrypted_password(pid):
+
+    if session.get('login') is None:
+        flash("Najpierw musisz się zalogować")
+        return redirect(url_for('login_form'))
+
+    if not is_database_available():
+        return "Błąd połączenia z bazą danych",500
+
+    db_record = get_password_record(pid)[0]
+
+    if(session.get("login") != db_record[0]):
+        flash("To nie Twoje hasło")
+        return redirect(url_for('dashboard'))
+
+    password = request.args.get('password')
+
+    if(not verify_master_password(session.get('login'),password)):
+        return "Błędne hasło główne",400
+
+    decrypted_password = decrypt(db_record[2])
+
+    return decrypted_password, 200
 
 
 @app.route('/user/logout')

@@ -35,9 +35,6 @@ update_submit_button();
 buttons_events()
 input_fields_events()
 
-// var imie = prompt("Podaj imię", "Adam");
-// console.log("Twoje imię: "+imie);
-
 
 function buttons_events(){
 

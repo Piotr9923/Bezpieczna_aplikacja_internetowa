@@ -110,7 +110,7 @@ tr.empty{
 
 
 th.id{
-	width: 70%;
+	width: 75%;
 	border-color: yellowgreen;
 }
 
@@ -145,5 +145,13 @@ footer{
 	font-size: 15px;
 }
 
+.show_password_button{
+	color: blue;
+	background-color: yellowgreen;
+	width: 50%;
+	border: none;
+}
 
+.password{
+}
 	
