@@ -420,7 +420,7 @@ def dashboard():
         return redirect(url_for('login_form'))
 
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
-        print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł",flush=True)
+        print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł oraz poinformowałbym Użytkowników o możliwym wycieku danych i zalecił im zmianę haseł",flush=True)
 
     return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr,haspasswords=(len(get_passwords())>0), passwords=get_passwords())
 
