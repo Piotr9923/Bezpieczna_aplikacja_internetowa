@@ -9,6 +9,7 @@ let master_password_correct = true
 let master_password2_correct = true
 let password_strength_correct = true
 let master_password_strength_correct = true
+let master_password_not_password = true
 
 let mail = document.getElementById("mail")
 let phone = document.getElementById("phone_number")
@@ -157,9 +158,9 @@ function input_fields_events(){
 
         p_strength = get_password_strength(this.value)
         if(this.value.length>0 && p_strength == "Bardzo słabe" || p_strength == "Słabe"){
-            master_password_strength = false
+            master_password_strength_correct = false
         }else{
-            master_password_strength = true
+            master_password_strength_correct = true
         }
         master_password_strength.innerText = "Siła hasła: "+ p_strength
 
@@ -169,10 +170,10 @@ function input_fields_events(){
         }
 
         if(this.value.length>0 && this.value==password.value){
-            document.getElementById("password_warning").innerText="Wpisałeś takie same hasło główne jak hasło. Jest to niebezpieczne!"
+            master_password_not_password = false
         }
         else{
-            document.getElementById("password_warning").innerText=""
+            master_password_not_password = true
         }
 
         update_submit_button()
@@ -216,6 +217,14 @@ function update_submit_button(){
         document.getElementById("button").disabled = true;
         document.getElementById("button").classList.add("disabled_button");
         document.getElementById("password_strength_warning").innerText = "Hasła powinny mieć co najmniej 'średnią' siłę"
+    }
+
+    if(master_password_not_password){
+        document.getElementById("password_warning").innerText="";
+    }else{
+        document.getElementById("button").disabled = true;
+        document.getElementById("button").classList.add("disabled_button");
+        document.getElementById("password_warning").innerText="Wpisałeś takie same hasło główne jak hasło. Jest to niebezpieczne!"
     }
 
 }
