@@ -7,8 +7,7 @@ let password = document.getElementById("password")
 let buttons = document.getElementsByTagName("img")
 let description = []
 description.push("Nazwa serwisu może zawierać małe i duże litery alfabetu łacińskiego, cyfry oraz symbole: znak podkreślenia (_ ), kropka(.), myślnik (-), wykrzyknik (!), dolar ($), gwiazdkę (*), dwukropek(:), slash (/) i odstęp( ). Maksymalnie 64 znaki.")
-description.push("Hasło może zawierać małe i duże litery alfabetu łacińskiego, cyfry oraz symbole: znak podkreślenia (_ ), kropka(.), myślnik (-), wykrzyknik (!), dolar ($) i gwiazdkę (*)")
-
+description.push("Hasło nie może zawierać nawiasów: '<','>','(',')'");
 
 input_fields_events()
 buttons_events()
@@ -47,13 +46,14 @@ function input_fields_events(){
 
     password.addEventListener("keyup", function (ev) {
 
-        if(correct_values(this.value,/[A-Za-z0-9_.@!$*-]+$/)){
-            password_correct = true;
-            this.classList.remove("incorrect_field");
-        }
-        else{
+        if(this.value.length>0 && correct_values(this.value,/[<>()]+$/)){
             password_correct = false;
             this.classList.add("incorrect_field");
+        }
+        else{
+            password_correct = true;
+            this.classList.remove("incorrect_field");
+
         }
 
         update_submit_button()

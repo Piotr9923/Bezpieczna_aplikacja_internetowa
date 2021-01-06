@@ -169,7 +169,6 @@ def get_password_record(pid):
     return passwords
 
 
-
 def save_new_ip(ip):
 
     ip = ip.encode()
@@ -215,6 +214,7 @@ def pad_password(password):
     while len(password)%16 != 0:
         password = password + " "
     return password
+
 
 def set_last_login():
     sql.execute(f"SELECT logged_time, ip, browser, op_sys FROM last_logins where username = '{session['login']}'")
