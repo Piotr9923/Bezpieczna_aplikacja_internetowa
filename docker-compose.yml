@@ -1,12 +1,26 @@
-version: '3'
+version: "3"
+
 services:
-  web:
-    build: .
-    ports:
-      - "8000:8000"
+  flask:
+    build: ./flask
+    container_name: flask
+    restart: always
     env_file: .env
     depends_on:
       - mariadb
+    environment:
+      - APP_NAME=MyFlaskApp
+    expose:
+      - 8080
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    restart: always
+    depends_on:
+      - flask
+    ports:
+      - "443:443"
   mariadb:
     image: mariadb
     environment:

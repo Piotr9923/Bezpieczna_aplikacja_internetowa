@@ -584,7 +584,3 @@ def user_logout():
     session.clear()
 
     return render_template("logout.html")
-
-
-if __name__ == '__main__':
-    app.run(threaded=True, port=5000)

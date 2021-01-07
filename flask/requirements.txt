@@ -11,4 +11,4 @@ ua-parser
 user-agents
 datetime
 pycryptodome
-
+uwsgi
