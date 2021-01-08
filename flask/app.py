@@ -246,8 +246,12 @@ def redirect(url, status=301):
 
 
 def get_link(token):
-    link = "http://127.0.0.1/user/password/new?token="+token
-    return link
+    links = []
+    link = "https://127.0.0.1/user/password/new?token=" + token
+    links.append(link)
+    link = "https://localhost/user/password/new?token=" + token
+    links.append(link)
+    return links
 
 
 def set_new_password(login, password):
@@ -406,7 +410,7 @@ def login():
     set_last_login()
 
     if is_new_ip(request.remote_addr):
-        print(f"Wysłałbym do Użytkownika maila o logowaniu na jego konto z nowego adresu IP - {request.remote_addr}", flush=True)
+        print(f"\n\n\nWysłałbym do Użytkownika maila o logowaniu na jego konto z nowego adresu IP - {request.remote_addr}\n\n\n", flush=True)
         save_new_ip(request.remote_addr)
 
     return redirect(url_for('dashboard'))
@@ -420,7 +424,7 @@ def dashboard():
         return redirect(url_for('login_form'))
 
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
-        print("Użytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł oraz poinformowałbym Użytkowników o możliwym wycieku danych i zalecił im zmianę haseł",flush=True)
+        print("\n\n\nUżytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł oraz poinformowałbym Użytkowników o możliwym wycieku danych i zalecił im zmianę haseł\n\n\n",flush=True)
 
     return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr,haspasswords=(len(get_passwords())>0), passwords=get_passwords())
 
@@ -441,11 +445,13 @@ def change_password():
 
             code = generate_sms_code(login).decode()
             token = generate_token(login)
-            print("Wysłałbym maila do Użytkownika o treści:\n"
+            print("\n\n\nWysłałbym maila do Użytkownika o treści:\n"
                   "Aby zmienić hasło, w ciągu 15 minut, kliknij w poniższy link:\n"
-                  f"{get_link(token)}\n\n"
+                  f"{get_link(token)[0]}\n\n"
+                  "Jeśli powyższy link nie działa spróbuj kliknąć w link alternatywny podany poniżej:\n"
+                  f"{get_link(token)[1]}\n\n"
                   "Wysłałbym do Użytkownika SMS-a z kodem:\n"
-                  f"{code}", flush=True)
+                  f"{code}\n\n\n", flush=True)
 
             flash("Mail i SMS zostały wysłane", category="info")
             return redirect(url_for('index'))
