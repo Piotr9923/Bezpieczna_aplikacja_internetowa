@@ -131,9 +131,9 @@ def save_user(phone_number,login,email,password,master_password):
     salt = gensalt(12)
     hashed_master_password = hashpw(master_password, salt).decode()
     try:
-        sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES ('{login}','{hashed_password}','{hashed_master_password}','{phone_number}','{email}')")
-        sql.execute(f"Insert into last_logins(username) VALUES ('{login}');")
-        sql.execute(f"Insert into sms_codes(username) VALUES ('{login}');")
+        sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES (%s,%s,%s,%s,%s)", (login,hashed_password,hashed_master_password,phone_number,email))
+        sql.execute(f"Insert into last_logins(username) VALUES (%s)", (login,))
+        sql.execute(f"Insert into sms_codes(username) VALUES (%s)", (login,))
         db.commit()
     except Exception as e:
         return False
@@ -175,7 +175,7 @@ def save_new_ip(ip):
     salt = gensalt(8)
     hashed_ip = hashpw(ip, salt).decode()
 
-    sql.execute(f"Insert into connections (username, ip) VALUES ('{session.get('login')}','{hashed_ip}');")
+    sql.execute(f"Insert into connections (username, ip) VALUES (%s,%s)", (session.get('login'),hashed_ip))
 
     db.commit()
     return True
@@ -185,7 +185,7 @@ def save_password(website, password):
 
     password = encrypt(password)
     try:
-        sql.execute(f"Insert into passwords (username, website, password) VALUES ('{session.get('login')}','{website}','{password}');")
+        sql.execute(f"Insert into passwords (username, website, password) VALUES (%s,%s,%s)", (session.get('login'), website, password))
         db.commit()
         return True
     except Exception as e:
@@ -222,7 +222,7 @@ def set_last_login():
 
     ua = parse(request.headers.get('User-Agent'))
 
-    if last_login[0][0] is None:
+    if len(last_login)==0 or last_login[0][0] is None:
         session["last_login"] = "To jest Twoje pierwsze logowanie"
     else:
         session["last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]} z przeglądarki {last_login[0][2]} w systemie operacyjnym {last_login[0][3]}"
@@ -289,6 +289,20 @@ def generate_code():
     code = str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9))
 
     return code
+
+
+def validate_input_vaule(field, value):
+    available = ""
+    if field == 'password':
+        available = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    return validate_string(value, available)
+
+def validate_string(string, available):
+    for l in string:
+        if not l in available:
+            return False
+    return True
 
 
 create_database()
