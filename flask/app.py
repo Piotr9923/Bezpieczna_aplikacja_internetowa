@@ -246,7 +246,7 @@ def redirect(url, status=301):
 
 
 def get_link(token):
-    link = "http://0.0.0.0:8000/user/password/new?token="+token
+    link = "http://127.0.0.1/user/password/new?token="+token
     return link
 
 
@@ -289,20 +289,6 @@ def generate_code():
     code = str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9))
 
     return code
-
-
-def validate_input_vaule(field, value):
-    available = ""
-    if field == 'password':
-        available = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-    return validate_string(value, available)
-
-def validate_string(string, available):
-    for l in string:
-        if not l in available:
-            return False
-    return True
 
 
 create_database()
