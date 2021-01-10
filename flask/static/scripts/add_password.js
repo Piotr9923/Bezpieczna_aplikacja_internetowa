@@ -7,7 +7,7 @@ let password = document.getElementById("password")
 let buttons = document.getElementsByTagName("img")
 let description = []
 description.push("Nazwa serwisu może zawierać małe i duże litery alfabetu łacińskiego, cyfry oraz symbole: znak podkreślenia (_ ), kropka(.), myślnik (-), wykrzyknik (!), dolar ($), gwiazdkę (*), dwukropek(:), slash (/) i odstęp( ). Maksymalnie 64 znaki.")
-description.push("Hasło nie może zawierać nawiasów: '<','>','(',')'");
+description.push("Hasło nie może zawierać nawiasów: '<','>','(',')'. Maksymalnie 40 znaków.");
 
 input_fields_events()
 buttons_events()

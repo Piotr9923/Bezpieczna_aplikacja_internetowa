@@ -19,7 +19,6 @@ from Crypto.Cipher import AES
 import hashlib
 from base64 import b64encode, b64decode
 
-
 db = mariadb.connect(host="mariadb", user="root", password="root")
 sql = db.cursor()
 
@@ -45,15 +44,16 @@ def delete_database():
 
 
 def create_database():
-
     sql.execute("CREATE DATABASE IF NOT EXISTS db;")
     sql.execute("USE db;")
     sql.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(32), password VARCHAR(128), master_password "
                 "VARCHAR(128), phone_number VARCHAR(12), mail VARCHAR(64));")
     sql.execute("CREATE TABLE IF NOT EXISTS connections (username VARCHAR(32), ip VARCHAR(128));")
     sql.execute("CREATE TABLE IF NOT EXISTS sms_codes (username VARCHAR(32), code VARCHAR(128) NULL);")
-    sql.execute("CREATE TABLE IF NOT EXISTS passwords (id INT AUTO_INCREMENT PRIMARY KEY NOT NULL, username VARCHAR(32), website VARCHAR(64), password VARCHAR(128));")
-    sql.execute("CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL, browser VARCHAR(32) NULL, op_sys VARCHAR(32));")
+    sql.execute(
+        "CREATE TABLE IF NOT EXISTS passwords (id INT AUTO_INCREMENT PRIMARY KEY NOT NULL, username VARCHAR(32), website VARCHAR(64), password VARCHAR(128));")
+    sql.execute(
+        "CREATE TABLE IF NOT EXISTS last_logins (username VARCHAR(32), logged_time DATETIME NULL, ip VARCHAR(128) NULL, browser VARCHAR(32) NULL, op_sys VARCHAR(32));")
     sql.execute("set names 'utf8'");
 
 
@@ -89,7 +89,7 @@ def is_user(login):
     return True
 
 
-def verify_user(login,password):
+def verify_user(login, password):
     if not is_user(login):
         return False
 
@@ -99,13 +99,13 @@ def verify_user(login,password):
     hashed = hashed.encode()
     password = password.encode()
 
-    if checkpw(password,hashed):
+    if checkpw(password, hashed):
         return True
 
     return False
 
 
-def verify_master_password(login,password):
+def verify_master_password(login, password):
     if not is_user(login):
         return False
     hashed = get_master_password(login)
@@ -120,8 +120,7 @@ def verify_master_password(login,password):
     return False
 
 
-def save_user(phone_number,login,email,password,master_password):
-
+def save_user(phone_number, login, email, password, master_password):
     password = password.encode()
     master_password = master_password.encode()
 
@@ -131,7 +130,9 @@ def save_user(phone_number,login,email,password,master_password):
     salt = gensalt(12)
     hashed_master_password = hashpw(master_password, salt).decode()
     try:
-        sql.execute(f"Insert into users (username, password, master_password, phone_number, mail) VALUES (%s,%s,%s,%s,%s)", (login,hashed_password,hashed_master_password,phone_number,email))
+        sql.execute(
+            f"Insert into users (username, password, master_password, phone_number, mail) VALUES (%s,%s,%s,%s,%s)",
+            (login, hashed_password, hashed_master_password, phone_number, email))
         sql.execute(f"Insert into last_logins(username) VALUES (%s)", (login,))
         sql.execute(f"Insert into sms_codes(username) VALUES (%s)", (login,))
         db.commit()
@@ -142,19 +143,17 @@ def save_user(phone_number,login,email,password,master_password):
 
 
 def is_new_ip(ip):
-
     sql.execute(f"SELECT * FROM connections WHERE username='{session.get('login')}'")
     connections = sql.fetchall()
 
     for conn in connections:
-        if checkpw(ip.encode(),conn[1].encode()):
+        if checkpw(ip.encode(), conn[1].encode()):
             return False
 
     return True
 
 
 def get_passwords():
-
     sql.execute(f"SELECT id, website, password FROM passwords WHERE username='{session.get('login')}'")
     passwords = sql.fetchall()
 
@@ -162,7 +161,6 @@ def get_passwords():
 
 
 def get_password_record(pid):
-
     sql.execute(f"SELECT username, website, password FROM passwords WHERE id='{pid}'")
     passwords = sql.fetchall()
 
@@ -170,22 +168,21 @@ def get_password_record(pid):
 
 
 def save_new_ip(ip):
-
     ip = ip.encode()
     salt = gensalt(8)
     hashed_ip = hashpw(ip, salt).decode()
 
-    sql.execute(f"Insert into connections (username, ip) VALUES (%s,%s)", (session.get('login'),hashed_ip))
+    sql.execute(f"Insert into connections (username, ip) VALUES (%s,%s)", (session.get('login'), hashed_ip))
 
     db.commit()
     return True
 
 
 def save_password(website, password):
-
     password = encrypt(password)
     try:
-        sql.execute(f"Insert into passwords (username, website, password) VALUES (%s,%s,%s)", (session.get('login'), website, password))
+        sql.execute(f"Insert into passwords (username, website, password) VALUES (%s,%s,%s)",
+                    (session.get('login'), website, password))
         db.commit()
         return True
     except Exception as e:
@@ -211,7 +208,7 @@ def decrypt(password):
 
 
 def pad_password(password):
-    while len(password)%16 != 0:
+    while len(password) % 16 != 0:
         password = password + " "
     return password
 
@@ -222,12 +219,14 @@ def set_last_login():
 
     ua = parse(request.headers.get('User-Agent'))
 
-    if len(last_login)==0 or last_login[0][0] is None:
+    if len(last_login) == 0 or last_login[0][0] is None:
         session["last_login"] = "To jest Twoje pierwsze logowanie"
     else:
-        session["last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]} z przeglądarki {last_login[0][2]} w systemie operacyjnym {last_login[0][3]}"
+        session[
+            "last_login"] = f"{last_login[0][0]} z adresu IP {last_login[0][1]} z przeglądarki {last_login[0][2]} w systemie operacyjnym {last_login[0][3]}"
     actual_time = datetime.utcnow() + timedelta(minutes=60);
-    sql.execute(f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}', browser='{ua.browser.family}', op_sys='{ua.os.family}' WHERE username='{session['login']}';")
+    sql.execute(
+        f"UPDATE last_logins SET logged_time = '{actual_time}', ip='{request.remote_addr}', browser='{ua.browser.family}', op_sys='{ua.os.family}' WHERE username='{session['login']}';")
     db.commit()
 
 
@@ -255,7 +254,6 @@ def get_link(token):
 
 
 def set_new_password(login, password):
-
     password = password.encode()
 
     salt = gensalt(12)
@@ -275,7 +273,6 @@ def generate_token(login):
 
 
 def generate_sms_code(login):
-
     code = generate_code()
 
     code = code.encode()
@@ -290,7 +287,7 @@ def generate_sms_code(login):
 
 
 def generate_code():
-    code = str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9)) + str(randint(0,9))
+    code = str(randint(0, 9)) + str(randint(0, 9)) + str(randint(0, 9)) + str(randint(0, 9))
 
     return code
 
@@ -300,16 +297,14 @@ create_database()
 
 @app.route('/')
 def index():
-
     if session.get('login') is None:
         return render_template("index.html")
 
-    return render_template('logged_index.html',last_login_info=session["last_login"], ip=request.remote_addr)
+    return render_template('logged_index.html', last_login_info=session["last_login"], ip=request.remote_addr)
 
 
 @app.route('/user/register', methods=['GET'])
 def registration_form():
-
     if session.get('login') is None:
         return render_template("registration.html")
 
@@ -339,7 +334,7 @@ def registration():
     if not password:
         flash("Brak hasła")
     if not master_password:
-            flash("Brak hasła głównego")
+        flash("Brak hasła głównego")
     if password != password2:
         flash(f"Hasła nie są takie same")
         return redirect(url_for('registration_form'))
@@ -355,7 +350,7 @@ def registration():
     else:
         return redirect(url_for('registration_form'))
 
-    success = save_user(phone_number,login,email,password,master_password)
+    success = save_user(phone_number, login, email, password, master_password)
 
     if not success:
         flash("Błąd rejestracji! Sprawdź długość wprowadzonych danych")
@@ -366,7 +361,6 @@ def registration():
 
 @app.route('/user/login', methods=["GET"])
 def login_form():
-
     if session.get('login') is None:
         return render_template("login.html")
 
@@ -379,9 +373,9 @@ def login():
         if datetime.utcnow() > session.get("login_block_time"):
             session.clear()
 
-    if session.get("bad_login") is not None and session.get("bad_login")>2:
-        delta = session.get("login_block_time")-datetime.utcnow()
-        flash("Logowanie możliwe za: "+str(delta.seconds//60)+" minut "+str(delta.seconds%60)+" sekund")
+    if session.get("bad_login") is not None and session.get("bad_login") > 2:
+        delta = session.get("login_block_time") - datetime.utcnow()
+        flash("Logowanie możliwe za: " + str(delta.seconds // 60) + " minut " + str(delta.seconds % 60) + " sekund")
         return redirect(url_for('login_form'))
 
     login = request.form.get("login")
@@ -394,11 +388,11 @@ def login():
     if not login or not password:
         flash("Brak nazwy użytkownika lub hasła")
         return redirect(url_for('login_form'))
-    if not verify_user(login,password):
+    if not verify_user(login, password):
         if session.get("bad_login") is None:
-            session["bad_login"]=0
-        session["bad_login"]=session.get("bad_login")+1
-        if session.get("bad_login")==3:
+            session["bad_login"] = 0
+        session["bad_login"] = session.get("bad_login") + 1
+        if session.get("bad_login") == 3:
             session["login_block_time"] = datetime.utcnow() + timedelta(seconds=300)
         time.sleep(3)
         flash("Błędna nazwa użytkownika i/lub hasła")
@@ -407,10 +401,15 @@ def login():
     session["login"] = login
     session["logged-at"] = datetime.now()
 
+    session["master_password_incorrect"] = 0
+    session["master_password_time_block"] = datetime.utcnow()
+
     set_last_login()
 
     if is_new_ip(request.remote_addr):
-        print(f"\n\n\nWysłałbym do Użytkownika maila o logowaniu na jego konto z nowego adresu IP - {request.remote_addr}\n\n\n", flush=True)
+        print(
+            f"\n\n\nWysłałbym do Użytkownika maila o logowaniu na jego konto z nowego adresu IP - {request.remote_addr}\n\n\n",
+            flush=True)
         save_new_ip(request.remote_addr)
 
     return redirect(url_for('dashboard'))
@@ -418,15 +417,17 @@ def login():
 
 @app.route('/user/dashboard')
 def dashboard():
-
     if session.get('login') is None:
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
     if session.get('login') == "admin" or session.get('login') == "Piotr9923":
-        print("\n\n\nUżytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł oraz poinformowałbym Użytkowników o możliwym wycieku danych i zalecił im zmianę haseł\n\n\n",flush=True)
+        print(
+            "\n\n\nUżytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł oraz poinformowałbym Użytkowników o możliwym wycieku danych i zalecił im zmianę haseł\n\n\n",
+            flush=True)
 
-    return render_template("dashboard.html",last_login_info=session["last_login"], ip=request.remote_addr,haspasswords=(len(get_passwords())>0), passwords=get_passwords())
+    return render_template("dashboard.html", last_login_info=session["last_login"], ip=request.remote_addr,
+                           haspasswords=(len(get_passwords()) > 0), passwords=get_passwords())
 
 
 @app.route('/user/password/change', methods=["GET"])
@@ -436,7 +437,6 @@ def change_password_form():
 
 @app.route('/user/password/change', methods=["POST"])
 def change_password():
-
     login = request.form.get("login")
     mail = request.form.get("mail")
 
@@ -484,7 +484,6 @@ def new_password_form():
 
 @app.route('/user/password/new', methods=["POST"])
 def new_password():
-
     password = request.form.get("password")
     password2 = request.form.get("password2")
     code = request.form.get("code")
@@ -511,7 +510,8 @@ def new_password():
         flash("Brak dostępu do zmiany hasła")
         return redirect(url_for('index'))
 
-    if get_sms_code(payload.get('usr')) is not None and not checkpw(code.encode(),get_sms_code(payload.get('usr')).encode()):
+    if get_sms_code(payload.get('usr')) is not None and not checkpw(code.encode(),
+                                                                    get_sms_code(payload.get('usr')).encode()):
         flash("Błędny kod SMS")
         return render_template("new_password.html", token=token)
 
@@ -523,17 +523,15 @@ def new_password():
 
 @app.route('/password/add', methods=['GET'])
 def add_password_form():
-
     if session.get('login') is None:
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("add_password.html",last_login_info=session["last_login"], ip=request.remote_addr)
+    return render_template("add_password.html", last_login_info=session["last_login"], ip=request.remote_addr)
 
 
 @app.route('/password/add', methods=['POST'])
 def add_password():
-
     if session.get('login') is None:
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
@@ -549,7 +547,7 @@ def add_password():
         flash("Brak nazwy serwisu lub hasła")
         return redirect(url_for('add_password_form'))
 
-    success = save_password(website,password)
+    success = save_password(website, password)
 
     if not success:
         flash("Błąd zapisu hasła")
@@ -560,33 +558,45 @@ def add_password():
 
 @app.route('/passwords/<pid>')
 def get_decrypted_password(pid):
-
     if session.get('login') is None:
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
     if not is_database_available():
-        return "Błąd połączenia z bazą danych",500
+        return "Błąd połączenia z bazą danych", 500
 
     db_record = get_password_record(pid)[0]
 
-    if(session.get("login") != db_record[0]):
+    if (session.get("login") != db_record[0]):
         flash("To nie Twoje hasło")
         return redirect(url_for('dashboard'))
 
-    password = request.args.get('password')
+    print(session.get("master_password_incorrect"),flush=True)
+    if datetime.utcnow() > session.get("master_password_time_block") and session.get("master_password_incorrect") > 2:
+        session["master_password_incorrect"] = 0
 
-    if(not verify_master_password(session.get('login'),password)):
-        return "Błędne hasło główne",400
+    if session.get("master_password_incorrect") > 2:
+        delta = session.get("master_password_time_block") - datetime.utcnow()
+        return ("Odszyfrowanie hasła możliwe za: " + str(delta.seconds // 60) + " minut " + str(
+            delta.seconds % 60) + " sekund"), 400
+
+    password = request.args.get('password')
+    time.sleep(0.3)
+
+    if (not verify_master_password(session.get('login'), password)):
+        session["master_password_incorrect"] =  session["master_password_incorrect"] + 1
+        if session.get("master_password_incorrect")>2:
+            session["master_password_time_block"] = datetime.utcnow() + timedelta(seconds=120)
+        return "Błędne hasło główne", 400
+
+    session["master_password_incorrect"] = 0
 
     decrypted_password = decrypt(db_record[2])
-
     return decrypted_password, 200
 
 
 @app.route('/user/logout')
 def user_logout():
-
     session.clear()
 
     return render_template("logout.html")
