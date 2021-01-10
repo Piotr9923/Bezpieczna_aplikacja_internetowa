@@ -190,7 +190,7 @@ def save_password(website, password):
 
 
 def encrypt(password):
-    key = hashlib.sha256(PASSWORD.encode()).digest()
+    key = hashlib.sha256((PASSWORD+get_aes_password()).encode()).digest()
     mode = AES.MODE_CBC
     cipher = AES.new(key, mode, IV.encode())
     padded = pad_password(password).encode()
@@ -200,11 +200,16 @@ def encrypt(password):
 
 def decrypt(password):
     password = b64decode(password.encode())
-    key = hashlib.sha256(PASSWORD.encode()).digest()
+    key = hashlib.sha256((PASSWORD+get_aes_password()).encode()).digest()
     mode = AES.MODE_CBC
     cipher = AES.new(key, mode, IV.encode())
     decrypted_text = cipher.decrypt(password)
     return decrypted_text.rstrip().decode()
+
+
+def get_aes_password():
+    master_pass = get_master_password(session.get("login"))
+    return master_pass[3] + master_pass[7] + master_pass[4]
 
 
 def pad_password(password):
