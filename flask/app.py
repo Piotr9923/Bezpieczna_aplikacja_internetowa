@@ -31,6 +31,7 @@ app.secret_key = getenv("SECRET_KEY")
 app.debug = False
 
 JWT_SECRET = getenv("JWT_SECRET")
+CSRF_SECRET = getenv("CSRF_SECRET")
 IV = getenv("IV")
 PASSWORD = getenv("PASSWORD")
 
@@ -277,6 +278,15 @@ def generate_token(login):
     return token
 
 
+def generate_csrf_token(login):
+    payload = {
+        "iss": "Bezpiecznik",
+        "usr": login,
+    }
+    token = encode(payload, CSRF_SECRET, algorithm='HS256')
+    return token
+
+
 def generate_sms_code(login):
     code = generate_code()
 
@@ -405,6 +415,7 @@ def login():
 
     session["login"] = login
     session["logged-at"] = datetime.now()
+    session["csrf_token"] = generate_csrf_token(login)
 
     session["master_password_incorrect"] = 0
     session["master_password_time_block"] = datetime.utcnow()
@@ -432,7 +443,7 @@ def dashboard():
             flush=True)
 
     return render_template("dashboard.html", last_login_info=session["last_login"], ip=request.remote_addr,
-                           haspasswords=(len(get_passwords()) > 0), passwords=get_passwords())
+                           haspasswords=(len(get_passwords()) > 0), passwords=get_passwords(), csrf=session.get("csrf_token"))
 
 
 @app.route('/user/password/change', methods=["GET"])
@@ -532,7 +543,7 @@ def add_password_form():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
-    return render_template("add_password.html", last_login_info=session["last_login"], ip=request.remote_addr)
+    return render_template("add_password.html", last_login_info=session["last_login"], ip=request.remote_addr, csrf=session.get("csrf_token"))
 
 
 @app.route('/password/add', methods=['POST'])
@@ -551,6 +562,20 @@ def add_password():
     if not website or not password:
         flash("Brak nazwy serwisu lub hasła")
         return redirect(url_for('add_password_form'))
+
+    csrf_token = request.args.get('csrf')
+    if csrf_token is None:
+        flash("Wystąpił błąd!")
+        return redirect(url_for('add_password_form'),401)
+    try:
+        payload = decode(csrf_token, CSRF_SECRET, algorithms=['HS256'])
+    except jwt.InvalidTokenError:
+        flash("Wystąpił błąd!")
+        return redirect(url_for('add_password_form'),401)
+
+    if payload["usr"] != session.get("login"):
+        flash("Wystąpił błąd!")
+        return redirect(url_for('add_password_form'),401)
 
     success = save_password(website, password)
 
@@ -576,7 +601,6 @@ def get_decrypted_password(pid):
         flash("To nie Twoje hasło")
         return redirect(url_for('dashboard'))
 
-    print(session.get("master_password_incorrect"),flush=True)
     if datetime.utcnow() > session.get("master_password_time_block") and session.get("master_password_incorrect") > 2:
         session["master_password_incorrect"] = 0
 
@@ -592,7 +616,18 @@ def get_decrypted_password(pid):
         session["master_password_incorrect"] =  session["master_password_incorrect"] + 1
         if session.get("master_password_incorrect")>2:
             session["master_password_time_block"] = datetime.utcnow() + timedelta(seconds=120)
-        return "Błędne hasło główne", 400
+        return "Błędne hasło główne", 401
+
+    csrf_token = request.args.get('csrf')
+    if csrf_token is None:
+        return "Wystąpił błąd!",401
+    try:
+        payload = decode(csrf_token, CSRF_SECRET, algorithms=['HS256'])
+    except jwt.InvalidTokenError:
+        return "Wystąpił błąd!",401
+
+    if payload["usr"] != session.get("login"):
+        return "Wystąpił błąd!",401
 
     session["master_password_incorrect"] = 0
 

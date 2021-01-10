@@ -46,7 +46,7 @@
    	<tr class="label">
 			<th><b>{{password[1]}}</b></th>
 			<th class="password"><b>{{password[2]}}</b></th>
-			<th><button class="show_password_button" value={{password[0]}}>Odszyfruj hasło</button></th>
+			<th><button class="show_password_button" value={{password[0]}} csrf={{csrf}}>Odszyfruj hasło</button></th>
 		</tr>
 		<tr class="empty"></tr>
    	{% endfor %}

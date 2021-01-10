@@ -4,7 +4,6 @@ var passwords_column = document.getElementsByClassName("password")
 console.log(passwords_column.length)
 function attach_events() {
     for(i=0;i< buttons.length;i++){
-
         buttons[i].i=i
         buttons[i].addEventListener("click", function(ev){
 
@@ -24,7 +23,7 @@ function attach_events() {
                 var user_password = prompt("Podaj hasło główne", "");
 
                 if(user_password != null){
-                    var link = "/passwords/"+this.value+"?password="+user_password
+                    var link = "/passwords/"+this.value+"?password="+user_password+"&csrf="+this.attributes.getNamedItem("csrf").value;
                     var xhr = new XMLHttpRequest();
                     xhr.open("GET", link);
                     xhr.onload = function (e) {
