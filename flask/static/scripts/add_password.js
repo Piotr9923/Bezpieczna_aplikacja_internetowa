@@ -7,7 +7,7 @@ let password = document.getElementById("password")
 let buttons = document.getElementsByTagName("img")
 let description = []
 description.push("Nazwa serwisu może zawierać małe i duże litery alfabetu łacińskiego, cyfry oraz symbole: znak podkreślenia (_ ), kropka(.), myślnik (-), wykrzyknik (!), dolar ($), gwiazdkę (*), dwukropek(:), slash (/) i odstęp( ). Maksymalnie 64 znaki.")
-description.push("Hasło nie może zawierać nawiasów: '<','>','(',')'. Maksymalnie 40 znaków.");
+description.push("Hasło nie może zawierać nawiasów: '<','>','(',')' i polskich znaków. Maksymalnie 40 znaków.");
 
 input_fields_events()
 buttons_events()
@@ -46,7 +46,7 @@ function input_fields_events(){
 
     password.addEventListener("keyup", function (ev) {
 
-        if(this.value.length>0 && correct_values(this.value,/[<>()]+$/)){
+        if(this.value.length>0 && correct_values(this.value,/[<>()ąęćłóśźż]+$/)){
             password_correct = false;
             this.classList.add("incorrect_field");
         }
