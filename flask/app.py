@@ -307,6 +307,14 @@ def generate_code():
     return code
 
 
+def check_field(value, letters):
+    for v in value:
+        if v not in letters:
+            return False
+
+    return True
+
+
 create_database()
 
 
@@ -335,6 +343,35 @@ def registration():
     password2 = request.form.get("password2")
     master_password = request.form.get("master_password")
     master_password2 = request.form.get("master_password2")
+
+    if not check_field(email,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-@"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
+    if not check_field(phone_number,"0123456789"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
+    if not check_field(login,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
+    if not check_field(password,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
+    if not check_field(password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
+    if not check_field(master_password,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
+    if not check_field(master_password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('registration_form'))
+
 
     if not is_database_available():
         flash("Błąd połączenia z bazą danych")
@@ -400,6 +437,14 @@ def login():
         flash("Błąd połączenia z bazą danych")
         return redirect(url_for('login_form'))
 
+    if not check_field(login,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('login_form'))
+
+    if not check_field(password,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('login_form'))
+
     if not login or not password:
         flash("Brak nazwy użytkownika lub hasła")
         return redirect(url_for('login_form'))
@@ -456,6 +501,14 @@ def change_password():
     login = request.form.get("login")
     mail = request.form.get("mail")
 
+    if not check_field(login,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('index'))
+
+    if not check_field(mail,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-@"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('index'))
+
     if is_user(login):
         if get_mail(login) is not None and get_mail(login) == mail:
 
@@ -504,6 +557,14 @@ def new_password():
     password2 = request.form.get("password2")
     code = request.form.get("code")
     token = request.args.get('token')
+
+    if not check_field(password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('login_form'))
+
+    if not check_field(password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('login_form'))
 
     if not is_database_available():
         flash("Błąd połączenia z bazą danych")
@@ -554,6 +615,14 @@ def add_password():
 
     website = request.form.get("website")
     password = request.form.get("password")
+
+    if not check_field(website,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-$*:/ "):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('add_password_form'))
+
+    if check_field(password,"<>()"):
+        flash("Formularz zawiera niedozowlone pola")
+        return redirect(url_for('add_password_form'))
 
     if not is_database_available():
         flash("Błąd połączenia z bazą danych")
