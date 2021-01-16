@@ -282,6 +282,7 @@ def generate_csrf_token(login):
     payload = {
         "iss": "Bezpiecznik",
         "usr": login,
+        "exp": datetime.utcnow()+timedelta(seconds=300)
     }
     token = encode(payload, CSRF_SECRET, algorithm='HS256')
     return token
@@ -345,31 +346,31 @@ def registration():
     master_password2 = request.form.get("master_password2")
 
     if not check_field(email,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-@"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
     if not check_field(phone_number,"0123456789"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
     if not check_field(login,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
     if not check_field(password,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
     if not check_field(password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
     if not check_field(master_password,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
     if not check_field(master_password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('registration_form'))
 
 
@@ -438,11 +439,11 @@ def login():
         return redirect(url_for('login_form'))
 
     if not check_field(login,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('login_form'))
 
     if not check_field(password,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('login_form'))
 
     if not login or not password:
@@ -460,7 +461,6 @@ def login():
 
     session["login"] = login
     session["logged-at"] = datetime.now()
-    session["csrf_token"] = generate_csrf_token(login)
 
     session["master_password_incorrect"] = 0
     session["master_password_time_block"] = datetime.utcnow()
@@ -487,6 +487,8 @@ def dashboard():
             "\n\n\nUżytkownik zalogował się na konto-pułapka. W tym momencie zablokowałbym możliwość korzystania z aplikacji dla wszystkich Użytkowników, w celu ochrony zapisanych w bazie haseł oraz poinformowałbym Użytkowników o możliwym wycieku danych i zalecił im zmianę haseł\n\n\n",
             flush=True)
 
+    session["csrf_token"] = generate_csrf_token(login)
+
     return render_template("dashboard.html", last_login_info=session["last_login"], ip=request.remote_addr,
                            haspasswords=(len(get_passwords()) > 0), passwords=get_passwords(), csrf=session.get("csrf_token"))
 
@@ -502,11 +504,11 @@ def change_password():
     mail = request.form.get("mail")
 
     if not check_field(login,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('index'))
 
     if not check_field(mail,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-@"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('index'))
 
     if is_user(login):
@@ -559,11 +561,11 @@ def new_password():
     token = request.args.get('token')
 
     if not check_field(password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('login_form'))
 
     if not check_field(password2,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-!$*"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('login_form'))
 
     if not is_database_available():
@@ -604,6 +606,8 @@ def add_password_form():
         flash("Najpierw musisz się zalogować")
         return redirect(url_for('login_form'))
 
+    session["csrf_token"] = generate_csrf_token(login)
+
     return render_template("add_password.html", last_login_info=session["last_login"], ip=request.remote_addr, csrf=session.get("csrf_token"))
 
 
@@ -617,11 +621,11 @@ def add_password():
     password = request.form.get("password")
 
     if not check_field(website,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-$*:/ "):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('add_password_form'))
 
     if check_field(password,"<>()"):
-        flash("Formularz zawiera niedozowlone pola")
+        flash("Formularz zawiera niedozwolone znaki")
         return redirect(url_for('add_password_form'))
 
     if not is_database_available():
@@ -634,13 +638,16 @@ def add_password():
 
     csrf_token = request.args.get('csrf')
     if csrf_token is None:
-        flash("Wystąpił błąd!")
+        flash("Wystąpił błąd! Spróbuj ponownie!")
         return redirect(url_for('add_password_form'),401)
     try:
         payload = decode(csrf_token, CSRF_SECRET, algorithms=['HS256'])
     except jwt.InvalidTokenError:
         flash("Wystąpił błąd!")
         return redirect(url_for('add_password_form'),401)
+    except jwt.ExpiredSignatureError:
+        flash("Wystąpił błąd! Spróbuj ponownie!")
+        return redirect(url_for('add_password_form'), 401)
 
     if payload["usr"] != session.get("login"):
         flash("Wystąpił błąd!")
@@ -694,6 +701,9 @@ def get_decrypted_password(pid):
         payload = decode(csrf_token, CSRF_SECRET, algorithms=['HS256'])
     except jwt.InvalidTokenError:
         return "Wystąpił błąd!",401
+    except jwt.ExpiredSignatureError:
+        flash("Wystąpił błąd! Spróbuj ponownie!")
+        return redirect(url_for('add_password_form'), 401)
 
     if payload["usr"] != session.get("login"):
         return "Wystąpił błąd!",401
